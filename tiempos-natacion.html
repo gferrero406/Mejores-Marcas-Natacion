@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mis mejores tiempos - Natación</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: #0b1724;
+      color: #f5f7fa;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      max-width: 1000px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 1.6rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+      color: #c4c9d4;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+
+    .controls select,
+    .controls button {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: #0f2235;
+      color: #f5f7fa;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .controls button.active {
+      background: #1976d2;
+      border-color: #1976d2;
+    }
+
+    .controls button:hover,
+    .controls select:hover {
+      background: #14304a;
+    }
+
+    .table-wrapper,
+    #ranking-wrapper {
+      overflow-x: auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      background: #0f2235;
+      margin-bottom: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+
+    thead {
+      background: #102b44;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      text-align: center;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    th {
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      font-size: 0.75rem;
+      color: #e3e7f0;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .time-cell {
+      background: #0c375b;
+      color: #f5f7fa;
+      border-radius: 6px;
+      padding: 6px 8px;
+      display: inline-block;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time-cell:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      background: #11507f;
+    }
+
+    .time-cell.empty {
+      background: transparent;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .time-cell.empty:hover {
+      transform: none;
+    }
+
+    .event-name {
+      font-weight: 600;
+      color: #f5f7fa;
+    }
+
+    /* Panel de detalles */
+    #details-panel {
+      margin-top: 10px;
+      padding: 16px 18px;
+      border-radius: 12px;
+      background: #111e2c;
+      border: 1px solid rgba(255,255,255,0.06);
+      display: none;
+      animation: fadeIn 0.18s ease-out;
+    }
+
+    #details-panel h2 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    #details-panel .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+    }
+
+    #details-panel .meta div {
+      background: rgba(255,255,255,0.04);
+      padding: 6px 9px;
+      border-radius: 8px;
+    }
+
+    #details-panel .label {
+      font-weight: 600;
+      margin-right: 4px;
+      color: #cdd3e0;
+    }
+
+    .splits-list {
+      margin-top: 6px;
+      padding-left: 18px;
+      font-size: 0.9rem;
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: #a4acba;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Formulario agregar tiempo */
+    #add-form-wrapper {
+      margin-top: 10px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #111e2c;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: none;
+    }
+
+    #add-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+      gap: 10px;
+      margin-top: 8px;
+      font-size: 0.85rem;
+    }
+
+    #add-form label {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    #add-form input,
+    #add-form select,
+    #add-form textarea {
+      padding: 5px 7px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: #0f2235;
+      color: #f5f7fa;
+      font-size: 0.8rem;
+    }
+
+    #add-form textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    #add-form button {
+      grid-column: 1 / -1;
+      justify-self: flex-start;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      background: #1976d2;
+      color: #fff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    #add-form button:hover {
+      background: #1f88f0;
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.35rem; }
+      th, td { padding: 6px; font-size: 0.8rem; }
+      table { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>Mis mejores tiempos</h1>
+  <p class="subtitle">Hacé clic en cualquier tiempo para ver el detalle (torneo, lugar, fecha y pases).</p>
+
+  <div class="controls">
+    <button id="view-table" class="active">Vista tabla</button>
+    <button id="view-ranking">Vista ranking</button>
+
+    <select id="style-filter">
+      <option value="todos">Todos los estilos</option>
+      <option value="Libre">Libre</option>
+      <option value="Espalda">Espalda</option>
+      <option value="Pecho">Pecho</option>
+      <option value="Mariposa">Mariposa</option>
+      <option value="Combinado">Combinado</option>
+    </select>
+
+    <button id="toggle-form-btn">Agregar nuevo tiempo</button>
+    <button id="export-btn">Exportar JSON</button>
+    <button id="import-btn">Importar JSON</button>
+    <input type="file" id="import-input" accept="application/json" style="display:none" />
+  </div>
+
+  <div class="table-wrapper" id="table-wrapper">
+    <table>
+      <thead>
+      <tr>
+        <th>Posta<br>25m</th>
+        <th>Pileta 25m</th>
+        <th>Prueba</th>
+        <th>Pileta 50m</th>
+        <th>Posta<br>50m</th>
+      </tr>
+      </thead>
+      <tbody id="times-body">
+      <!-- Filas generadas por JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ranking-wrapper" style="display:none">
+    <table>
+      <thead>
+      <tr>
+        <th>#</th>
+        <th>Prueba</th>
+        <th>Estilo</th>
+        <th>Mejor tiempo</th>
+        <th>Dónde</th>
+      </tr>
+      </thead>
+      <tbody id="ranking-body">
+      <!-- Ranking generado por JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <div id="details-panel">
+    <h2 id="details-title"></h2>
+    <div class="meta">
+      <div><span class="label">Pileta / tipo:</span><span id="details-pool"></span></div>
+      <div><span class="label">Tiempo:</span><span id="details-time"></span></div>
+      <div><span class="label">Torneo:</span><span id="details-meet"></span></div>
+      <div><span class="label">Lugar:</span><span id="details-location"></span></div>
+      <div><span class="label">Fecha:</span><span id="details-date"></span></div>
+    </div>
+    <div>
+      <span class="label">Pases:</span>
+      <ul id="details-splits" class="splits-list"></ul>
+    </div>
+    <p id="details-notes" class="hint"></p>
+  </div>
+
+  <div id="add-form-wrapper">
+    <strong>Agregar / actualizar tiempo</strong>
+    <p class="hint">
+      Elegí la prueba y el tipo de tiempo. Si la prueba ya existe, se va a actualizar; si no, se crea una nueva fila.
+      Los pases van uno por línea (ej: <code>50 m: 00:27,50</code>).
+    </p>
+    <form id="add-form">
+      <label>
+        Prueba (ej: 50 L, 100 E, 200 CI)
+        <input type="text" id="af-prueba" required />
+      </label>
+      <label>
+        Estilo
+        <select id="af-estilo" required>
+          <option value="Libre">Libre</option>
+          <option value="Espalda">Espalda</option>
+          <option value="Pecho">Pecho</option>
+          <option value="Mariposa">Mariposa</option>
+          <option value="Combinado">Combinado</option>
+        </select>
+      </label>
+      <label>
+        Tipo de tiempo
+        <select id="af-tipo" required>
+          <option value="relay25">Posta 25 m</option>
+          <option value="pool25">Pileta 25 m</option>
+          <option value="pool50">Pileta 50 m</option>
+          <option value="relay50">Posta 50 m</option>
+        </select>
+      </label>
+      <label>
+        Tiempo (mm:ss,cc)
+        <input type="text" id="af-tiempo" placeholder="00:59,08" required />
+      </label>
+      <label>
+        Torneo
+        <input type="text" id="af-meet" />
+      </label>
+      <label>
+        Lugar
+        <input type="text" id="af-lugar" />
+      </label>
+      <label>
+        Fecha
+        <input type="date" id="af-fecha" />
+      </label>
+      <label>
+        Pases (uno por línea)
+        <textarea id="af-splits" placeholder="50 m: 00:27,50&#10;100 m: 00:59,08"></textarea>
+      </label>
+      <label>
+        Notas
+        <input type="text" id="af-notas" />
+      </label>
+      <button type="submit">Guardar tiempo</button>
+    </form>
+  </div>
+
+  <p class="hint">
+    Podés guardar tus marcas como JSON y después volver a cargarlas. Es un sistema simple pero muy flexible.
+  </p>
+</div>
+
+<script>
+  // =============== DATOS INICIALES (foto) ====================
+  // Cada objeto es una prueba con los mejores tiempos de la tabla.
+  // Podés editar o agregar nuevas desde el formulario.
+
+  let events = [
+    {
+      prueba: "50 L",
+      estilo: "Libre",
+      relay25: { time: "00:26,87", meet: "Copa Sierras", date: "24/10/2025", location: "San Luis", splits: [], notes: "" },
+      pool25:  { time: "00:27,61", meet: "Chau Frio", date: "30/08/2025", location: "El Norte Rio Segundo", splits: [], notes: "" },
+      pool50:  { time: "00:27,34", meet: "Cba Motor Natacion Arg", date: "14/11/2025", location: "Kempes", splits: [], notes: "" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    {
+      prueba: "100 L",
+      estilo: "Libre",
+      relay25: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool25:  { time: "00:59,09", meet: "Gloriosa Bandera", date: "28/06/2025", location: "Rio Segundo", splits: ["25 m: 00:29,00",
+      "50 m: 00:30,09"], notes: "" },
+      pool50:  { time: "01:01,71", meet: "Chau Frio", date: "26/09/2025", location: "Kempes", splits: [], notes: "tengo recuerdo que abri en 28 y se hicieron largos los 2dos 50" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    {
+      prueba: "200 L",
+      estilo: "Libre",
+      relay25: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool25:  { time: "02:08,65", meet: "Copa Sierras", date: "26/10/2025", location: "San Luis", splits: ["50 m: 00:30,41",
+      "100 m: 00:33,95", "100m: 1:04.36", "150 m: 00:32,91", "200 m: 00:31,38",  "200 m: 01:04,29"], notes: ""},
+      pool50:  { time: "02:12,21", meet: "Cba Motor Natacion Arg", date: "14/11/2025", location: "Kempes", splits: [], notes: "" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    {
+      prueba: "400 L",
+      estilo: "Libre",
+      relay25: null,
+      pool25:  { time: "04:36,82", meet: "Otoño 2025", date: "17/05/2025", location: "Arroyito", splits: [], notes: "" },
+      pool50:  { time: "04:35,42", meet: "Verano del 2025", date: "24/01/2025", location: "Kempes", splits: ["100 m: 01:06,00", "200m: 1:11.00", "300 m: 01:10,00", "400 m: 01:07,00"], notes: "" },
+      relay50: null
+    },
+    {
+      prueba: "800 L",
+      estilo: "Libre",
+      relay25: null,
+      pool25:  { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool50:  { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      relay50: null
+    },
+    {
+      prueba: "1500 L",
+      estilo: "Libre",
+      relay25: null,
+      pool25:  { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool50:  { time: "19:03,32", meet: "Chau Frio", date: "26/09/2025", location: "Kempes", splits: [], notes: "Creo que abri en 1:13 y despues mantuve todo 1:16-17 y no encontre el ritmo para explotar al ultimo, estuvo todo muy plano" },
+      relay50: null
+    },
+    {
+      prueba: "50 E",
+      estilo: "Espalda",
+      relay25: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool25:  { time: "00:32,98", meet: "Primavera 2024", date: "28/09/2024", location: "Kempes", splits: [], notes: "" },
+      pool50:  { time: "00:35,05", meet: "Cba Motor Natacion Arg", date: "23/11/2024", location: "Kempes", splits: [], notes: "" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    {
+      prueba: "100 E",
+      estilo: "Espalda",
+      relay25: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool25:  { time: "01:08,49", meet: "Chau Frio", date: "30/08/2025", location: "Rio Segundo", splits: [], notes: "Salio ese tiempo porque aproveche al maximo el subacuatico en todas las vueltas y ganaba ventaja con eso, porque nadando espalda me suelo quedar bastante" },
+      pool50:  { time: "01:13,63", meet: "Cba Motor Natacion Arg", date: "14/11/2025", location: "-Kempes", splits: [], notes: "Los 2dos 50 murieron completamente las piernas" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    {
+      prueba: "200 E",
+      estilo: "Espalda",
+      relay25: null,
+      pool25:  { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool50:  { time: "02:49,46", meet: "Cierre de Temporada ", date: "23/03/2024", location: "Kempes", splits: [], notes: "" },
+      relay50: null
+    },
+    {
+      prueba: "50 P",
+      estilo: "Pecho",
+      relay25: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool25:  { time: "00:40.84", meet: "Primavera 2023", date: "23/09/2023", location: "Kempes", splits: [], notes: "" },
+      pool50:  { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    {
+      prueba: "100 P",
+      estilo: "Pecho",
+      relay25: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool25:  { time: "01:23,96", meet: "Invierno 2025", date: "02/08/2025", location: "Rio Segundo", splits: [], notes: "" },
+      pool50:  { time: "01:28,97", meet: "Chau Frio", date: "26/09/2025", location: "Kempes", splits: [], notes: "" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    {
+      prueba: "200 P",
+      estilo: "Pecho",
+      relay25: null,
+      pool25:  { time: "03:02,81", meet: "Gloriosa Bandera", date: "29/06/2024", location: "Kempes", splits: ["50 m: 41",
+      "100 m: 47", "100m: 1:28", "150 m: 47", "200 m: 46",  "200 m: 01:35"], notes: "" },
+      pool50:  { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      relay50: null
+    },
+    {
+      prueba: "50 M",
+      estilo: "Mariposa",
+      relay25: { time: "00:28,72", meet: "Copa Sierras", date: "25/10/2025", location: "San Luis", splits: [], notes: "" },
+      pool25:  { time: "00:32,70", meet: "Copa Sierras", date: "27/10/2023", location: "San Luis", splits: [], notes: "" },
+      pool50:  { time: "00:29,77", meet: "Cba Motor Natacion Arg", date: "14/11/2025", location: "Kempes", splits: [], notes: "" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    {
+      prueba: "100 M",
+      estilo: "Mariposa",
+      relay25: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool25:  { time: "1:04.89", meet: "Gloriosa Bandera", date: "28/06/2025", location: "Rio Segundo", splits: [], notes: "Tebi me tomo 1:03,90 y los cronometristas 1:04.89, pero no estaban tomando muy bien los tiempos y me habian tomado mas y lo terminaron cambiando" },
+      pool50:  { time: "01:08,58", meet: "Cba Motor Natacion Arg", date: "15/11/2025", location: "Kempes", splits: [], notes: "Fueron despues de unos 200 combi que abri fuerte en mari y busque la misma sensacion de nado largo pero fuerte y mori los 2dos 50, ademas era la ultima prueba de un torneo de 2 dias y se sintio el cansancio" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    {
+      prueba: "200 M",
+      estilo: "Mariposa",
+      relay25: null,
+      pool25:  { time: "02:28,09", meet: "Copa Sierras", date: "24/10/2025", location: "San Luis", splits: ["50 m: 00:31,99",
+      "100 m: 00:37,34", "100m: 1:09.33", "150 m: 00:39,62", "200 m: 00:39,14",  "200 m: 01:18,76"], notes: "Fue despues de nadar 200 combi fuerte y me cuesta mucho mantener el estilo para el final de la prueba" },
+      pool50:  { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      relay50: null
+    },
+    {
+      prueba: "100 IM",
+      estilo: "Combinado",
+      relay25: null,
+      pool25:  { time: "01:12,92", meet: "Open Malvinas Argentinas", date: "20/04/2024", location: "Kempes", splits: [], notes: "El tiempo oficial es viejo, pero el 01/11/2025 en un TP de potencia hicimos 3x100 combi d/5' e hice 1:13, 1:14 y 1:13" },
+      pool50:  null,
+      relay50: null
+    },
+    {
+      prueba: "200 IM",
+      estilo: "Combinado",
+      relay25: null,
+      pool25:  { time: "02:25,14", meet: "Copa Sierras", date: "24/10/2025", location: "San Luis", splits: ["50 m: 00:31,50",
+      "100 m: 00:37,89", "150 m: 00:43,84", "200 m: 00:31,91"], notes: "Fue en la final b del torneo, habiendo nadado la eliminatoria a la mañana en la que hice 2:27.19(31.30-39-43-31) pero quede lejos de la pared en la vuelta de los 175 y habian varias cosas que mejorar, la estrategia para la final era no quemarse tanto en mari para poder apretar mas en espalda y pecho, tuve muy buenas sensaciones y mari salio apenas mas despacio que en la eliminatoria, le di mas bola al subacuatico de espalda en el que pude bajar 2 segundos del pase de la mañana y mantener el pase en pecho y crol" },
+      pool50:  { time: "02:30,79", meet: "Cba Motor Natacion Arg", date: "15/11/2025", location: "Kempes", splits: [], notes: "" },
+      relay50: null
+    },
+    {
+      prueba: "400 IM",
+      estilo: "Combinado",
+      relay25: null,
+      pool25:  { time: "05:16,42", meet: "Invierno 2025", date: "02/08/2025", location: "Rio Segundo", splits: ["100 m: 01:12",
+      "200 m: 01:21", "300m: 1:32", "400 m: 01:09"], notes: "El agua de la pileta estaba muy caliente y el ambiente estaba muy pesado, las correcciones de ese dia fueron que en mari estuve con la cadera muy dura, en espalda la patada estuvo hundida, en pecho deslice de mas y ya en crol sentia muy caliente el agua" },
+      pool50:  { time: "05:21,71", meet: "Nacional Juveniles Invierno", date: "14/06/2025", location: "Parque Roca", splits: ["50 m: 00:32,01",
+      "100 m: 00:39,68", "100m: 1:11.69", "150 m: 00:43,14", "200 m: 00:41,48",  "200 m: 01:24,62", "250 m: 00:48,90",
+      "300 m: 00:48,27", "300m: 1:37.17", "350 m: 00:34,99", "400 m: 00:33,24",  "400 m: 01:08,23"], notes: "" },
+      relay50: null
+    },
+    {
+    prueba: "T/T 1000 pp crol",
+      estilo: "Libre",
+      relay25: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool25:  { time: "17:42,00", meet: "-", date: "03/03/2025", location: "La Rufina", splits: [], notes: "" },
+      pool50:  { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    {
+    prueba: "T/T 2400 mariposa",
+      estilo: "Mariposa",
+      relay25: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool25:  { time: "37:18,00", meet: "-", date: "17/06/2025", location: "La Rufina", splits: [], notes: "" },
+      pool50:  { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    {
+    prueba: "T/T 3000 crol",
+      estilo: "Libre",
+      relay25: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" },
+      pool25:  { time: "39:38,00", meet: "-", date: "24/10/2025", location: "Heed", splits: [], notes: "El 24/10/2024 hice 39:38, el 03/12/2024 39:39, el 22/02/2025 39:44, el 25/06/2025 39:45 (100m: 1:10, 200m: 2:27, 400m: 5:00, 1000m: 12:48 y 2000m: en 26:40 y nunca pude volver a bajar el tiempo porque a partir de ahi la empezamos a hacer en la pile de 50)" },
+      pool50:  { time: "41:30,00", meet: "-", date: "12/11/2025", location: "Kempes", splits: ["1500m: 20:48"], notes: "Fue despues de haber hecho gimnasio y me cuesta la pileta de 50" },
+      relay50: { time: "-", meet: "-", date: "-", location: "-", splits: [], notes: "" }
+    },
+    
+  ];
+
+  // =============== UTILIDADES ====================
+
+  const tbody = document.getElementById("times-body");
+  const styleFilter = document.getElementById("style-filter");
+
+  const panel = document.getElementById("details-panel");
+  const titleEl = document.getElementById("details-title");
+  const poolEl = document.getElementById("details-pool");
+  const timeEl = document.getElementById("details-time");
+  const meetEl = document.getElementById("details-meet");
+  const locEl = document.getElementById("details-location");
+  const dateEl = document.getElementById("details-date");
+  const splitsEl = document.getElementById("details-splits");
+  const notesEl = document.getElementById("details-notes");
+
+  function getFilteredEvents() {
+    const f = styleFilter.value;
+    if (f === "todos") return events;
+    return events.filter(ev => (ev.estilo || "").toLowerCase() === f.toLowerCase());
+  }
+
+  function createTimeCell(entry, label, prueba) {
+    const td = document.createElement("td");
+
+    if (!entry) {
+      const span = document.createElement("span");
+      span.className = "time-cell empty";
+      span.textContent = "-";
+      td.appendChild(span);
+      return td;
+    }
+
+    const span = document.createElement("span");
+    span.className = "time-cell";
+    span.textContent = entry.time;
+    span.title = `${prueba} • ${label} • ${entry.time}`;
+
+    span.addEventListener("click", () => {
+      showDetails(`${prueba} — ${label}`, label, entry);
+    });
+
+    td.appendChild(span);
+    return td;
+  }
+
+  function renderTable() {
+    tbody.innerHTML = "";
+    const filtered = getFilteredEvents();
+    filtered.forEach(ev => {
+      const tr = document.createElement("tr");
+
+      tr.appendChild(createTimeCell(ev.relay25, "Posta 25 m", ev.prueba));
+      tr.appendChild(createTimeCell(ev.pool25,  "Pileta 25 m", ev.prueba));
+
+      const nameTd = document.createElement("td");
+      nameTd.className = "event-name";
+      nameTd.textContent = ev.prueba;
+      tr.appendChild(nameTd);
+
+      tr.appendChild(createTimeCell(ev.pool50,  "Pileta 50 m", ev.prueba));
+      tr.appendChild(createTimeCell(ev.relay50, "Posta 50 m", ev.prueba));
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  function showDetails(title, poolLabel, entry) {
+    titleEl.textContent = title;
+    poolEl.textContent = poolLabel;
+    timeEl.textContent = entry.time || "-";
+    meetEl.textContent = entry.meet || "-";
+    locEl.textContent  = entry.location || "-";
+    dateEl.textContent = entry.date || "-";
+
+    splitsEl.innerHTML = "";
+    if (entry.splits && entry.splits.length) {
+      entry.splits.forEach(s => {
+        const li = document.createElement("li");
+        li.textContent = s;
+        splitsEl.appendChild(li);
+      });
+    } else {
+      const li = document.createElement("li");
+      li.textContent = "Sin pases cargados.";
+      splitsEl.appendChild(li);
+    }
+
+    notesEl.textContent = entry.notes ? `Notas: ${entry.notes}` : "";
+    panel.style.display = "block";
+  }
+
+  // ---- Ranking ----
+  function timeToSeconds(str) {
+    if (!str) return null;
+    const t = str.replace(',', '.').split(':').map(Number);
+    if (t.length === 2) {
+      const [m, s] = t;
+      return m * 60 + s;
+    } else if (t.length === 3) {
+      const [h, m, s] = t;
+      return h*3600 + m*60 + s;
+    }
+    return null;
+  }
+
+  function bestTimeForEvent(ev) {
+    const options = [
+      { label: "Posta 25 m", key: "relay25" },
+      { label: "Pileta 25 m", key: "pool25" },
+      { label: "Pileta 50 m", key: "pool50" },
+      { label: "Posta 50 m", key: "relay50" }
+    ];
+    let best = null;
+
+    options.forEach(o => {
+      const e = ev[o.key];
+      if (e && e.time) {
+        const secs = timeToSeconds(e.time);
+        if (secs != null) {
+          if (!best || secs < best.seconds) {
+            best = { seconds: secs, time: e.time, where: o.label };
+          }
+        }
+      }
+    });
+    return best;
+  }
+
+  const rankingBody = document.getElementById("ranking-body");
+
+  function renderRanking() {
+    rankingBody.innerHTML = "";
+    const rows = [];
+    const filtered = getFilteredEvents();
+    filtered.forEach(ev => {
+      const best = bestTimeForEvent(ev);
+      if (best) {
+        rows.push({
+          prueba: ev.prueba,
+          estilo: ev.estilo || "-",
+          time: best.time,
+          where: best.where,
+          seconds: best.seconds
+        });
+      }
+    });
+    rows.sort((a,b) => a.seconds - b.seconds);
+
+    rows.forEach((r, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${r.prueba}</td>
+        <td>${r.estilo}</td>
+        <td>${r.time}</td>
+        <td>${r.where}</td>
+      `;
+      rankingBody.appendChild(tr);
+    });
+  }
+
+  // ---- Formulario agregar tiempo ----
+  const toggleFormBtn = document.getElementById("toggle-form-btn");
+  const addFormWrapper = document.getElementById("add-form-wrapper");
+  const addForm = document.getElementById("add-form");
+
+  toggleFormBtn.addEventListener("click", () => {
+    const visible = addFormWrapper.style.display === "block";
+    addFormWrapper.style.display = visible ? "none" : "block";
+  });
+
+  addForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const prueba = document.getElementById("af-prueba").value.trim();
+    const estilo = document.getElementById("af-estilo").value;
+    const tipo   = document.getElementById("af-tipo").value; // relay25/pool25/pool50/relay50
+    const tiempo = document.getElementById("af-tiempo").value.trim();
+    const meet   = document.getElementById("af-meet").value.trim() || "-";
+    const lugar  = document.getElementById("af-lugar").value.trim() || "-";
+    const fecha  = document.getElementById("af-fecha").value || "-";
+    const splitsText = document.getElementById("af-splits").value;
+    const notas  = document.getElementById("af-notas").value.trim();
+
+    const splits = splitsText
+      .split("\n")
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    if (!prueba || !tiempo) {
+      alert("Prueba y tiempo son obligatorios.");
+      return;
+    }
+
+    let ev = events.find(e => e.prueba === prueba);
+    if (!ev) {
+      ev = {
+        prueba,
+        estilo,
+        relay25: null,
+        pool25: null,
+        pool50: null,
+        relay50: null
+      };
+      events.push(ev);
+    } else {
+      ev.estilo = estilo || ev.estilo || "Libre";
+    }
+
+    ev[tipo] = {
+      time: tiempo,
+      meet,
+      date: fecha,
+      location: lugar,
+      splits,
+      notes: notas
+    };
+
+    addForm.reset();
+    document.getElementById("af-estilo").value = estilo; // que no se cambie
+    renderTable();
+    renderRanking();
+    alert("Tiempo guardado correctamente ✅");
+  });
+
+  // ---- Exportar / importar JSON ----
+  document.getElementById("export-btn").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(events, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tiempos-natacion.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  const importInput = document.getElementById("import-input");
+  document.getElementById("import-btn").addEventListener("click", () => {
+    importInput.click();
+  });
+
+  importInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (Array.isArray(data)) {
+          events = data;
+          renderTable();
+          renderRanking();
+          alert("JSON importado correctamente ✅");
+        } else {
+          alert("El archivo no tiene el formato esperado (debe ser un array).");
+        }
+      } catch (err) {
+        alert("Error al leer el JSON: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  // ---- Cambio de vista y filtro ----
+  const viewTableBtn = document.getElementById("view-table");
+  const viewRankingBtn = document.getElementById("view-ranking");
+  const tableWrapper = document.getElementById("table-wrapper");
+  const rankingWrapper = document.getElementById("ranking-wrapper");
+
+  viewTableBtn.addEventListener("click", () => {
+    viewTableBtn.classList.add("active");
+    viewRankingBtn.classList.remove("active");
+    tableWrapper.style.display = "block";
+    rankingWrapper.style.display = "none";
+    panel.style.display = "none";
+  });
+
+  viewRankingBtn.addEventListener("click", () => {
+    viewRankingBtn.classList.add("active");
+    viewTableBtn.classList.remove("active");
+    tableWrapper.style.display = "none";
+    rankingWrapper.style.display = "block";
+    panel.style.display = "none";
+  });
+
+  styleFilter.addEventListener("change", () => {
+    renderTable();
+    renderRanking();
+    panel.style.display = "none";
+  });
+
+  // Inicial
+  renderTable();
+  renderRanking();
+</script>
+</body>
+</html>
